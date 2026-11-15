@@ -78,6 +78,7 @@ def get_series_data(series_code: int):
             return cur.fetchall()
 
 
+
 def get_dashboard_data():
     refresh_stale_series()
 
@@ -87,34 +88,65 @@ def get_dashboard_data():
         latest = rows[-1] if rows else None
         previous = rows[-2] if len(rows) > 1 else None
         delta = None
-        if latest and previous:
-            delta = round(float(latest["value"]) - float(previous["value"]), meta["casas"])
 
-        indicators.append(
-            {
-                "code": code,
-                "name": meta["name"],
-                "unit": meta["unit"],
-                "latest_value": round(float(latest["value"]), meta["casas"]) if latest else None,
-                "latest_date": latest["ref_date"].strftime("%d/%m/%Y") if latest else None,
-                "delta": delta,
-                "labels": [r["ref_date"].strftime("%d/%m") for r in rows],
-                "values": [round(float(r["value"]), meta["casas"]) for r in rows],
-            }
-        )
+        if latest and previous:
+            delta = round(
+                float(latest["value"]) - float(previous["value"]),
+                meta["casas"]
+            )
+
+        indicators.append({
+            "code": code,
+            "name": meta["name"],
+            "unit": meta["unit"],
+            "latest_value": round(float(latest["value"]), meta["casas"]) if latest else None,
+            "latest_date": latest["ref_date"].strftime("%d/%m/%Y") if latest else None,
+            "delta": delta,
+            "labels": [r["ref_date"].strftime("%d/%m") for r in rows],
+            "values": [round(float(r["value"]), meta["casas"]) for r in rows],
+        })
 
     with bcb.get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) AS total FROM visits;")
             total_visits = cur.fetchone()["total"]
 
+            cur.execute("""
+                SELECT
+                    TO_CHAR(date_trunc('minute', created_at), 'HH24:MI') AS minute,
+                    COUNT(*) AS total
+                FROM visits
+                WHERE created_at >= NOW() - INTERVAL '60 minutes'
+                GROUP BY date_trunc('minute', created_at)
+                ORDER BY date_trunc('minute', created_at);
+            """)
+            access_rows = cur.fetchall()
+
+            cur.execute("""
+                SELECT path, created_at
+                FROM visits
+                ORDER BY created_at DESC
+                LIMIT 10;
+            """)
+            recent_rows = cur.fetchall()
+
     return {
         "indicators": indicators,
         "total_visits": total_visits,
         "uptime_seconds": int(time.time() - START_TIME),
-        "server_time": datetime.datetime.utcnow().isoformat() + "Z",
+        "server_time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "cache_hours": CACHE_HOURS,
+        "access_labels": [r["minute"] for r in access_rows],
+        "access_counts": [r["total"] for r in access_rows],
+        "recent_visits": [
+            {
+                "path": r["path"],
+                "time": r["created_at"].strftime("%d/%m/%Y %H:%M:%S")
+            }
+            for r in recent_rows
+        ],
     }
+
 
 
 @app.route("/")
