@@ -89,20 +89,6 @@ def get_dashboard_data():
         previous = rows[-2] if len(rows) > 1 else None
         delta = None
 
-<<<<<<< HEAD
-        indicators.append(
-            {
-                "code": code,
-                "name": meta["name"],
-                "unit": meta["unit"],
-                "latest_value": round(float(latest["value"]), meta["casas"]) if latest else None,
-                "latest_date": latest["ref_date"].strftime("%d/%m/%Y") if latest else None,
-                "delta": delta,
-                "labels": [r["ref_date"].strftime("%m/%Y") for r in rows],
-                "values": [round(float(r["value"]), meta["casas"]) for r in rows],
-            }
-        )
-=======
         if latest and previous:
             delta = round(
                 float(latest["value"]) - float(previous["value"]),
@@ -116,10 +102,9 @@ def get_dashboard_data():
             "latest_value": round(float(latest["value"]), meta["casas"]) if latest else None,
             "latest_date": latest["ref_date"].strftime("%d/%m/%Y") if latest else None,
             "delta": delta,
-            "labels": [r["ref_date"].strftime("%d/%m") for r in rows],
+            "labels": [r["ref_date"].strftime("%m/%Y") for r in rows],
             "values": [round(float(r["value"]), meta["casas"]) for r in rows],
         })
->>>>>>> 9c655bcbdb36c13e98ce60d200ad1b76066677b8
 
     with bcb.get_connection() as conn:
         with conn.cursor() as cur:
