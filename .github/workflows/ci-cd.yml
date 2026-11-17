@@ -14,11 +14,7 @@ on:
       - "Dockerfile"
 
 env:
-<<<<<<< HEAD
-IMAGE_NAME: ghcr.io/gabriellima007/aiven-devops-pipeline-main/dashboard-app
-=======
   IMAGE_NAME: ghcr.io/gabriellima007/aiven-devops-pipeline-main/dashboard-app
->>>>>>> 9c655bcbdb36c13e98ce60d200ad1b76066677b8
 
 jobs:
   test:
