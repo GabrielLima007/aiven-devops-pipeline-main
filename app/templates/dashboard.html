@@ -75,7 +75,21 @@
 
   <script>
     const indicators = {{ data.indicators | tojson }};
+    // azul, verde, vermelho
     const colors = ["#4f46e5", "#16a34a", "#dc2626"];
+    const axisIds = ["y", "y1", "y2"];
+
+    // Cada linha ganha o seu próprio eixo, com a cor da linha,
+    // porque os valores têm escalas muito diferentes (milhões x porcentagem).
+    const scales = {};
+    indicators.forEach((ind, i) => {
+      scales[axisIds[i % 3]] = {
+        position: i === 0 ? "left" : "right",
+        grid: { drawOnChartArea: i === 0 },
+        ticks: { color: colors[i % 3] },
+        title: { display: true, text: ind.unit, color: colors[i % 3] }
+      };
+    });
 
     new Chart(document.getElementById("indicatorsChart"), {
       type: "line",
@@ -84,8 +98,9 @@
         datasets: indicators.map((ind, i) => ({
           label: ind.name + " (" + ind.unit + ")",
           data: ind.values,
-          borderColor: colors[i % colors.length],
-          backgroundColor: colors[i % colors.length] + "26",
+          borderColor: colors[i % 3],
+          backgroundColor: colors[i % 3] + "26",
+          yAxisID: axisIds[i % 3],
           tension: 0.3,
           fill: false
         }))
@@ -93,7 +108,8 @@
       options: {
         responsive: true,
         interaction: { mode: "index", intersect: false },
-        plugins: { legend: { position: "bottom" } }
+        plugins: { legend: { position: "bottom" } },
+        scales: scales
       }
     });
 
